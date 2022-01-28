@@ -13,6 +13,11 @@ Download the project as a .zip file, then extract to a folder
 ```bash
 cd folder
 pip install -r requirementx.txt
+```
+
+## Running the script
+
+```bash
 python main.py
 ```
 
