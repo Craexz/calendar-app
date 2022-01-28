@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: black;
+    }
+    #signupbtn{
+    width: 1000px;
+    height: 100px;
+    color: white;
+    background-color: grey;
+    font-size: 50px;
+    font-family: 'Courier New';
+}
+
+#signupbtn:hover {
+      transition: 0.6s;
+      background-color: black;
+      cursor: pointer;
+      border-width: 2px;
+      border-color: cyan;
+}
+#loginbtn{
+    width: 1000px;
+    height: 100px;
+    color: white;
+    background-color: grey;
+    font-size: 50px;
+    font-family: 'Courier New';
+}
+#loginbtn:hover {
+      transition: 0.6s;
+      background-color: black;
+      cursor: pointer;
+      border-width: 2px;
+      border-color: cyan;
+}
+#container{
+    text-align: center;
+}
+
+  </style>
+  <title>The Shrine - Menu</title>
+</head>
+<body>
+  <br><br><br><br><br><br><br><br><br><br><br><br>
+  <div id = 'container'>
+    <form action = '/login'>
+      <button id = 'loginbtn'>LOGIN</button>
+    </form>
+    <br><br>
+    <form action = '/signup'>
+      <button id = 'signupbtn'>SIGN UP</button>
+    </form>
+  </div>
+</body>
+</html>
