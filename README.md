@@ -12,7 +12,7 @@ Download the project as a .zip file, then extract to a folder
 
 ```bash
 cd folder
-pip install -r requirementx.txt
+pip install -r requirements.txt
 ```
 
 ## Running the script
