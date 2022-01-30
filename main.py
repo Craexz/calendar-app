@@ -1,6 +1,8 @@
 from json.decoder import JSONDecodeError
 from flask import Flask, request, render_template, redirect
 import random, base64
+ 
+from werkzeug.debug import get_current_traceback
 
 from markupsafe import re
 
@@ -34,6 +36,8 @@ def checkDeletedTriggered(user):
     else:
         return False
 
+
+
 @app.route('/')   
 def start():
     return render_template('index.html')
@@ -59,6 +63,7 @@ def homepage():
     global username_
     username_ = request.form['username']
     password_ = request.form['password']
+
     usernamefile = open("src/usernames.txt", 'r')
     passwordfile = open('src/passwords.txt', 'r')
     passlist = passwordfile.read().splitlines()
@@ -90,9 +95,7 @@ def homepage():
 
     if username_ in usernames and password_ in passwords:
         if usernameindex == passwordindex:
-                global nameofuser
-                nameofuser = username_
-                path = 'users/'+nameofuser+"/data.txt"
+                path = 'users/'+username_+"/data.txt"
                 file = open(path, 'r')
                 data = []
                 for line in file.read().splitlines():
@@ -151,7 +154,8 @@ def post_signup():
 
 @app.route("/createAssignment", methods = ["POST"])
 def createAssignment():
-
+        nameofuser = request.form['username_']
+        nameofuser = nameofuser.replace(" ", "")
         name = request.form['Name']
         description = request.form['Description']
         duedate = request.form['DueDate']
@@ -192,24 +196,27 @@ def createAssignment():
             for line in file.read().splitlines():
                 data.append(line)
                     
-            return render_template('homepage.html', data = data)
+            return render_template('homepage.html', data = data, username = nameofuser)
         else:
-            return render_template('homepage.html')
+            return render_template('homepage.html', username = nameofuser)
 
 @app.route('/deleteResubmitted')
 def deleteResubmitted():
+     nameofuser = request.args.get("username")
      path = 'users/'+nameofuser+"/data.txt"
      file = open(path, 'r')
      data = []
      for line in file.read().splitlines():
            data.append(line)
 
-     return render_template('homepage.html', data = data)
+     return render_template('homepage.html', data = data, username = nameofuser)
 
 @app.route('/deletebtn', methods = ["GET"])
 def deletebtn():
+                nameofuser = request.args.get("username")
+                id_ = request.args.get("id_")
                 if checkDeletedTriggered(nameofuser) == False:
-                    id_ = request.args.get("id_")
+                    print("Deleting user: "+nameofuser+"'s assignment with id: "+str(id_))
                     path = 'users/'+nameofuser+"/data.txt"
                     file = open(path, 'r')
                     i = 1
@@ -231,7 +238,8 @@ def deletebtn():
                         try:
                             if line.strip("\n") != linetodelete:
                                 newfile.write(line)
-                        except UnboundLocalError:
+                        except UnboundLocalError as e:
+                            print(e)
                             pass
 
                     newfile.close()
@@ -242,10 +250,9 @@ def deletebtn():
                         data.append(line)
                     triggerDeleteSubmitted(nameofuser)
 
-                    return render_template('homepage.html', data = data)
+                    return render_template('homepage.html', data = data, username = nameofuser)
                 else: 
                     triggerDeleteNotSubmitted(nameofuser)
-                    return redirect("/deleteResubmitted")
-        
+                    return redirect("/deleteResubmitted?username="+nameofuser)
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
