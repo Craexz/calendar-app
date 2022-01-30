@@ -3,9 +3,9 @@
 
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="google-signin-client_id" content="474337374940-53ouv6a9ht9lqsti7s46liql8c2sphpm.apps.googleusercontent.com">
   <link href='https://fonts.googleapis.com/css?family=Wire+One|Raleway:300' rel='stylesheet' type='text/css'>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<style>
 		body {
@@ -184,6 +184,7 @@ body {
   <div class="white-block">
       <h1 class = 'subtitle'>Add your assignments...</h1>
       <form action = "/createAssignment" method = "post">
+        <input value = "" type="hidden" name="username_" id = "username_">
         <label for="name">Assignment Name</label>
         <input type = 'text' name = 'Name' placeholder = 'Assignment Name'>
         <label for="Description">Description</label>
@@ -207,7 +208,13 @@ body {
         </tr>
       </table>
     </div>
- 
+    <h1 style = "display:none;" id = "usernameStorage"> {{ username }} </h1>
+    <script>
+      var username_ = document.getElementById("usernameStorage").innerHTML;
+      username_ = username_.substring(1);
+      console.log(username_)
+      document.getElementById("username_").value = username_
+    </script>
     <script type = 'text/javascript'>
       dataElement = document.getElementById('data')
       rawJson = dataElement.innerHTML;
@@ -257,17 +264,18 @@ body {
         deleteBTN.class = "button"
         deleteBTN.id = id
         deleteBTN.innerHTML = "Delete"
-        deleteBTN.href = '/deletebtn?id_='+deleteBTN.id
-        
+        var username_ = document.getElementById("usernameStorage").innerHTML;
+        var username_ = username_.substring(1)
+        deleteBTN.href = '/deletebtn?id_='+deleteBTN.id+"&username="+username_
+        console.log("Update");
         deletetd.appendChild(deleteBTN)
 
         nametd.innerHTML = name_
         descriptiontd.innerHTML = desc
         duedatetd.innerHTML = duedate       
-        
+        console.log("Done")
       }
 
     </script>
-
 </body> 
 </html>
