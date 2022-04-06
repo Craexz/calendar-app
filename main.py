@@ -2,9 +2,9 @@ from json.decoder import JSONDecodeError
 from flask import Flask, request, render_template, redirect
 import random, base64
  
-from werkzeug.debug import get_current_traceback
-
-from markupsafe import re
+import logging
+log = logging.getLogger('werkzeug')
+log.disabled = True
 
 app = Flask(__name__)
 
@@ -38,24 +38,34 @@ def checkDeletedTriggered(user):
 
 
 
+def triggerCreateSubmitted(user):
+    file = open('users/'+user+"/createTriggered.txt", 'w')
+    file.write("TRUE")
+
+def triggerCreateNotSubmitted(user):
+    file = open('users/'+user+"/createTriggered.txt", 'w')
+    file.write("FALSE")
+
+def checkCreateTriggered(user):
+    file = open('users/'+user+"/createTriggered.txt", 'r')
+    data = file.read()
+    if data == "TRUE":
+        return True
+    else:
+        return False
+
+      
+
+
 @app.route('/')   
 def start():
+    print("User connected")
     return render_template('index.html')
 
-@app.route('/load_report')
-def load_report():
-    return render_template('report.html')
-
-@app.route('/send_report', methods=['POST'])
-def send_report():
-    report = request.form['report']
-    reportfile = open('reports.txt', 'a')
-    reportfile.write(report)
-    reportfile.write('\n')
-    return render_template('message.html', message="Sent report successfully!")
 
 @app.route("/login")
 def load_login():
+    print("User loaded login screen")
     return render_template("login.html")
 
 @app.route('/homepage', methods=['POST'])
@@ -84,6 +94,7 @@ def homepage():
         usernameindex = usernames.index(username_)
         usernameindex = int(usernameindex)
     except ValueError:
+        print("User entered incorrect login info")
         return render_template("incorrectlogin.html")
 
     try:  
@@ -91,6 +102,7 @@ def homepage():
         passwordindex = passwords.index(password_)
         passwordindex = int(passwordindex)
     except ValueError:
+        print("User entered incorrect login info")
         return render_template("incorrectlogin.html")
 
     if username_ in usernames and password_ in passwords:
@@ -101,14 +113,19 @@ def homepage():
                 for line in file.read().splitlines():
                     data.append(line)
                 triggerDeleteNotSubmitted(username)
+                triggerCreateNotSubmitted(username)
+                print("User successfully logged in")
                 return render_template('homepage.html', username = username_, data = data)
         else:
+            print("User entered incorrect login info")
             return render_template("incorrectlogin.html")
     else:
+        print("User entered incorrect login info")
         return render_template("incorrectlogin.html")
 
 @app.route('/signup')
 def signup():
+    print("User loaded signup page")
     return render_template("signup.html")
 
 @app.route('/post_signup', methods=['POST'])
@@ -129,6 +146,7 @@ def post_signup():
     userlist = usernamefile.read().splitlines()
 
     if password in passlist and username in userlist:
+        print("User tried to make an account that is already taken")
         return render_template("accounttaken.html")
     else:
         try:
@@ -140,6 +158,7 @@ def post_signup():
 
             open(str(path)+'/data.txt', 'x')
             open(str(path)+'/deleteTriggered.txt', 'x')
+            open(str(path)+'/createTriggered.txt', 'x')
 
             passwordfile = open("src/passwords.txt", 'a')
             usernamefile = open('src/usernames.txt', 'a') 
@@ -147,9 +166,10 @@ def post_signup():
             usernamefile.write('\n')
             passwordfile.write(password)
             passwordfile.write('\n')
-
+            print("User created a new account")
             return render_template("login.html")
         except FileExistsError:
+            print("User tried to make an account that is already taken.")
             return render_template("accounttaken.html")
 
 @app.route("/createAssignment", methods = ["POST"])
@@ -159,49 +179,67 @@ def createAssignment():
         name = request.form['Name']
         description = request.form['Description']
         duedate = request.form['DueDate']
-        if nameofuser:
-            file = open('users/'+nameofuser+"/data.txt")
-            lines = []
-            for line in file.read().splitlines():
-                lines.append(line)
-            length_ = len(lines)
-            
-            id_ = length_+1
+  
+        if checkCreateTriggered(nameofuser) == False:
+          if nameofuser:
+              file = open('users/'+nameofuser+"/data.txt")
+              lines = []
+              for line in file.read().splitlines():
+                  lines.append(line)
+              length_ = len(lines)
+              
+              id_ = length_+1
+  
+              data_ = {
+                  'name': name,
+                  'description': description,
+                  'duedate': duedate,
+                  'id': id_
+              }
+  
+              path = 'users/'+nameofuser+"/data.txt"
+  
+              import json
+              try:
+  
+                  with open(path, "r") as f:  
+                      data = f.read()  
+                  if data == "" or data == " ":
+                      data = str(data_)
+                  else:
+                      data = str(data)+"\n"+str(data_)
+              except JSONDecodeError:
+                  data = data_
+              with open(path, 'w') as f:
+                  f.write(data)
+  
+              file = open(path, 'r')
+              data = []
+              for line in file.read().splitlines():
+                  data.append(line)
 
-            data_ = {
-                'name': name,
-                'description': description,
-                'duedate': duedate,
-                'id': id_
-            }
-
-            path = 'users/'+nameofuser+"/data.txt"
-
-            import json
-            try:
-
-                with open(path, "r") as f:  
-                    data = f.read()  
-                if data == "" or data == " ":
-                    data = str(data_)
-                else:
-                    data = str(data)+"\n"+str(data_)
-            except JSONDecodeError:
-                data = data_
-            with open(path, 'w') as f:
-                f.write(data)
-
-            file = open(path, 'r')
-            data = []
-            for line in file.read().splitlines():
-                data.append(line)
-                    
-            return render_template('homepage.html', data = data, username = nameofuser)
+              triggerCreateSubmitted(nameofuser)
+              print("User created an assignment")
+              return render_template('homepage.html', data = data, username = nameofuser)
+          else:
+              return render_template('homepage.html', username = nameofuser)
         else:
-            return render_template('homepage.html', username = nameofuser)
-
+          print("User resubmitted createAssignment method, but was handled.")
+          triggerCreateNotSubmitted(nameofuser)
+          return redirect("/createResubmitted?username="+nameofuser)
 @app.route('/deleteResubmitted')
 def deleteResubmitted():
+     nameofuser = request.args.get("username")
+     path = 'users/'+nameofuser+"/data.txt"
+     file = open(path, 'r')
+     data = []
+     for line in file.read().splitlines():
+           data.append(line)
+
+     return render_template('homepage.html', data = data, username = nameofuser)
+
+@app.route('/createResubmitted')
+def createResubmitted():
      nameofuser = request.args.get("username")
      path = 'users/'+nameofuser+"/data.txt"
      file = open(path, 'r')
@@ -216,7 +254,6 @@ def deletebtn():
                 nameofuser = request.args.get("username")
                 id_ = request.args.get("id_")
                 if checkDeletedTriggered(nameofuser) == False:
-                    print("Deleting user: "+nameofuser+"'s assignment with id: "+str(id_))
                     path = 'users/'+nameofuser+"/data.txt"
                     file = open(path, 'r')
                     i = 1
@@ -249,9 +286,10 @@ def deletebtn():
                     for line in file.read().splitlines():
                         data.append(line)
                     triggerDeleteSubmitted(nameofuser)
-
+                    print("User deleted a button")
                     return render_template('homepage.html', data = data, username = nameofuser)
                 else: 
+                    print("User resubmitted deleteBtn method, but was handled.")
                     triggerDeleteNotSubmitted(nameofuser)
                     return redirect("/deleteResubmitted?username="+nameofuser)
 if __name__ == "__main__":
