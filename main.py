@@ -66,7 +66,7 @@ def server(addr, port, logs):
 
     def assignment_action_timeout_handler(user, deleteOrCreate, setOption = None):
         if setOption is None:
-                return checkTrigger(user, f'/{deleteOrCreate}Triggered.txt')
+                return checkTrigger(user, f'{deleteOrCreate}Triggered.txt')
 
         if setOption == True:
                 file = open(f"userData/{user}/{deleteOrCreate}Triggered.txt", "w")
@@ -79,7 +79,8 @@ def server(addr, port, logs):
 
 
     def checkTrigger(user, fileName):
-        file = open(f"userData/{user}{fileName}", "r")
+        user = user.replace(" ", "")
+        file = open(f"userData/{user}/{fileName}", "r")
         data = file.read()
         return data == "TRUE"
 
