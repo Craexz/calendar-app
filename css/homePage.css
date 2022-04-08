@@ -1,0 +1,161 @@
+body {
+    background-color: rgb(rgba(56, 33, 33, 0), green, blue);
+    overflow-x: hidden;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+
+h1 {
+    font-family: "Bebas Neue";
+    font-size: 70px;
+    color: grey;
+    text-align: center;
+}
+button {
+font-family: "Bebas Neue";
+    font-size: 70px;
+    color: grey;
+    text-align: center;
+}
+
+
+#name {
+background-color: black;
+color:gold;
+border-radius: 10px;
+height: 38px;
+font-size: 10px;
+}
+
+#description {
+background-color: black;
+color:gold;
+border-radius: 10px;
+height: 38px;
+font-size: 10px;
+}
+#duedate {
+background-color: black;
+color:gold;
+border-radius: 10px;
+height: 38px;
+font-size: 10px;
+}
+
+#submit {
+background-color: grey;
+color:white;
+border-color: black;
+height: 38px;
+border-radius: 10px;
+font-size: 20px;
+border-width: 1px;
+}
+
+#submit:hover{
+transition: 0.6s;
+background-color: black;
+cursor: pointer;
+border-width: 2px;
+border-color: cyan;
+}
+h2 {
+color: gold;
+}
+p {
+color: white;
+}
+table {
+font-family: arial, sans-serif;
+border-collapse: collapse;
+width: 100%;
+}
+
+td, th {
+border: 1px solid black;
+text-align: left;
+padding: 8px;
+background-color: #369A7E;
+}
+
+tr:nth-child(even) {
+background-color: #369A7E;
+}
+a.button {
+-webkit-appearance: button;
+-moz-appearance: button;
+appearance: button;
+
+text-decoration: none;
+color: initial;
+}
+.header {
+padding: 60px;
+text-align: center;
+background: #1abc9c;
+color: white;
+font-size: 30px;
+}
+input[type=text], select {
+width: 100%;
+padding: 12px 20px;
+margin: 8px 0;
+display: inline-block;
+border: 1px solid #ccc;
+border-radius: 4px;
+box-sizing: border-box;
+}
+
+input[type=submit] {
+width: 100%;
+background-color: #4CAF50;
+color: white;
+padding: 14px 20px;
+margin: 8px 0;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+}
+
+input[type=submit]:hover {
+background-color: #45a049;
+}
+
+.title { color: #111; font-family: 'Helvetica Neue', sans-serif; font-size: 150px; font-weight: bold; letter-spacing: -1px; line-height: 1; text-align: center; }
+.subtitle {
+text-align:center;
+font-size:80px;
+font-family:'wire one', serif;
+font-weight:normal;
+}
+body {
+margin:0px;
+}
+.colour-block {
+background:#369A7E;
+width:60%;
+padding:7% 20% 10% 20%;
+color:#fff;
+}
+.white-block {
+background:#fff;
+width:60%;
+padding:7% 20% 10% 20%;
+color:#369A7E;
+}
+
+
+.scallop-down{
+height:100px;
+width:100%;
+background: -webkit-gradient(radial, 50% 0, 10, 50% 0, 40, from(#369A7E), color-stop(0.49, #369A7E), color-stop(0.51, #fff), to(white));
+-webkit-background-size: 49px 100%;
+}
+
+.scallop-up{
+height:100px;
+width:100%;
+background: -webkit-gradient(radial, 50% 100%, 10, 50% 100%, 40, from(#369A7E), color-stop(0.49, #369A7E), color-stop(0.51, #fff), to(white));
+-webkit-background-size: 49px 100%;
+}

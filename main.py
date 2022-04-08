@@ -1,296 +1,414 @@
 from json.decoder import JSONDecodeError
-from flask import Flask, request, render_template, redirect
-import random, base64
- 
+
+from flask import Flask 
+from flask import request
+from flask import render_template
+from flask import redirect
+
+import random
+import base64
 import logging
-log = logging.getLogger('werkzeug')
-log.disabled = True
+import sys
+import keyboard
+import os
+import time
 
-app = Flask(__name__)
+banner = """
+                ▄████▄   ▄▄▄        ██████ 
+                ▒██▀ ▀█  ▒████▄    ▒██    ▒ 
+                ▒▓█    ▄ ▒██  ▀█▄  ░ ▓██▄   
+                ▒▓▓▄ ▄██▒░██▄▄▄▄██   ▒   ██▒
+                ▒ ▓███▀ ░ ▓█   ▓██▒▒██████▒▒
+                ░ ░▒ ▒  ░ ▒▒   ▓▒█░▒ ▒▓▒ ▒ ░
+                ░  ▒     ▒   ▒▒ ░░ ░▒  ░ ░
+                ░          ░   ▒   ░  ░  ░  
+                ░ ░            ░  ░      ░  
+                ░                           
 
-def encode(text):
-    text_bytes = text.encode('ascii')
-    base64_bytes = base64.b64encode(text_bytes)
-    encoded = base64_bytes.decode('ascii')
-    return encoded
+        Calendar App Server -- Developed by Ben Hershey                                                                                                                                                             
+"""
 
-def decode(text):
-    text_bytes = text.encode('ascii')
-    decoded_bytes = base64.b64decode(text_bytes)
-    decoded = decoded_bytes.decode('ascii')
-    return decoded
+def slowprint(s):
+  for c in s + '\n':
+    sys.stdout.write(c)
+    sys.stdout.flush()
+    time.sleep(1./50)
 
-def triggerDeleteSubmitted(user):
-    file = open('users/'+user+"/deleteTriggered.txt", 'w')
-    file.write("TRUE")
+def server(port, logs):    
+    log = logging.getLogger("werkzeug")
 
-def triggerDeleteNotSubmitted(user):
-    file = open('users/'+user+"/deleteTriggered.txt", 'w')
-    file.write("FALSE")
-
-def checkDeletedTriggered(user):
-    file = open('users/'+user+"/deleteTriggered.txt", 'r')
-    data = file.read()
-    if data == "TRUE":
-        return True
+    if logs.lower() == "y":
+        log.disabled = True
     else:
-        return False
+        log.disabled = False
+
+    app = Flask(__name__,template_folder="html")
+
+    def encode(text):
+        text_bytes = text.encode("ascii")
+        base64_bytes = base64.b64encode(text_bytes)
+        return base64_bytes.decode("ascii")
+
+
+    def decode(text):
+        text_bytes = text.encode("ascii")
+        decoded_bytes = base64.b64decode(text_bytes)
+        return decoded_bytes.decode("ascii")
+
+
+    def assignment_action_timeout_handler(user, deleteOrCreate, setOption = None):
+        if setOption is None:
+                return checkTrigger(user, f'/{deleteOrCreate}Triggered.txt')
+
+        if setOption == True:
+                file = open(f"userData/{user}/{deleteOrCreate}Triggered.txt", "w")
+                file.write("TRUE")     
+
+        elif setOption == False:
+                file = open(f"userData/{user}/{deleteOrCreate}Triggered.txt", "w")
+                file.write("FALSE")
 
 
 
-def triggerCreateSubmitted(user):
-    file = open('users/'+user+"/createTriggered.txt", 'w')
-    file.write("TRUE")
-
-def triggerCreateNotSubmitted(user):
-    file = open('users/'+user+"/createTriggered.txt", 'w')
-    file.write("FALSE")
-
-def checkCreateTriggered(user):
-    file = open('users/'+user+"/createTriggered.txt", 'r')
-    data = file.read()
-    if data == "TRUE":
-        return True
-    else:
-        return False
-
-      
+    def checkTrigger(user, fileName):
+        file = open(f"userData/{user}{fileName}", "r")
+        data = file.read()
+        return data == "TRUE"
 
 
-@app.route('/')   
-def start():
-    print("User connected")
-    return render_template('index.html')
+    @app.route("/")
+    def start():
+        print("User connected")
+
+        username = request.cookies.get("username")
+        token = request.cookies.get("token")
+
+        if username is None:
+            return render_template("index.html")
+        try:
+
+            path = f"userData/{username}/data.txt"
+
+            file = open(path, "r")
+            data = list(file.read().splitlines())
+
+            tokenFile = open(f"userData/{username}/token.txt", "r")
+            actualToken = tokenFile.read()
+
+            if token == actualToken:
+                return render_template(
+                    "homepage.html", username=username, data=data, token=actualToken
+                )
+
+        except Exception:
+            return render_template("index.html")
 
 
-@app.route("/login")
-def load_login():
-    print("User loaded login screen")
-    return render_template("login.html")
+    @app.route("/login")
+    def load_login():
+        print("User loaded login screen")
+        return render_template("login.html")
 
-@app.route('/homepage', methods=['POST'])
-def homepage():
-    global username_
-    username_ = request.form['username']
-    password_ = request.form['password']
 
-    usernamefile = open("src/usernames.txt", 'r')
-    passwordfile = open('src/passwords.txt', 'r')
-    passlist = passwordfile.read().splitlines()
-    userlist = usernamefile.read().splitlines()
-    usernames = []
-    passwords = []
+    @app.route("/homepage", methods=["POST"])
+    def homepage():
+        global username_
 
-    for username in userlist:
-        username = decode(username)
-        usernames.append(username)
+        username_ = request.form["username"]
+        password_ = request.form["password"]
 
-    for password in passlist:
-        password = decode(password)
-        passwords.append(password)
+        usernamefile = open("globalData/usernames.txt", "r")
+        passwordfile = open("globalData/passwords.txt", "r")
 
-    try:  
-        global usernameindex
-        usernameindex = usernames.index(username_)
-        usernameindex = int(usernameindex)
-    except ValueError:
-        print("User entered incorrect login info")
-        return render_template("incorrectlogin.html")
+        passlist = passwordfile.read().splitlines()
+        userlist = usernamefile.read().splitlines()
 
-    try:  
-        global passwordindex
-        passwordindex = passwords.index(password_)
-        passwordindex = int(passwordindex)
-    except ValueError:
-        print("User entered incorrect login info")
-        return render_template("incorrectlogin.html")
+        usernames = []
+        passwords = []
 
-    if username_ in usernames and password_ in passwords:
-        if usernameindex == passwordindex:
-                path = 'users/'+username_+"/data.txt"
-                file = open(path, 'r')
-                data = []
-                for line in file.read().splitlines():
-                    data.append(line)
-                triggerDeleteNotSubmitted(username)
-                triggerCreateNotSubmitted(username)
-                print("User successfully logged in")
-                return render_template('homepage.html', username = username_, data = data)
+        for username in userlist:
+            username = decode(username)
+            usernames.append(username)
+
+        for password in passlist:
+            password = decode(password)
+            passwords.append(password)
+
+        try:
+            global usernameindex
+            usernameindex = usernames.index(username_)
+            usernameindex = usernameindex
+
+        except ValueError:
+            print("User entered incorrect login info")
+            return render_template("incorrectlogin.html")
+
+        try:
+            global passwordindex
+            passwordindex = passwords.index(password_)
+            passwordindex = passwordindex
+
+        except ValueError:
+            print("User entered incorrect login info")
+            return render_template("incorrectlogin.html")
+
+        if username_ in usernames and password_ in passwords and usernameindex == passwordindex:
+            path = f"userData/{username_}/data.txt"
+
+            file = open(path, "r")
+            data = list(file.read().splitlines())
+
+            assignment_action_timeout_handler(username, "delete", False)
+            assignment_action_timeout_handler(username, "create", False)
+
+
+            print("User successfully logged in")
+
+            token = open(f"userData/{username_}/token.txt", "r").read()
+
+            return render_template(
+                "homepage.html", username=username_, data=data, token=token
+            )
+
         else:
             print("User entered incorrect login info")
             return render_template("incorrectlogin.html")
-    else:
-        print("User entered incorrect login info")
-        return render_template("incorrectlogin.html")
 
-@app.route('/signup')
-def signup():
-    print("User loaded signup page")
-    return render_template("signup.html")
 
-@app.route('/post_signup', methods=['POST'])
-def post_signup():
-    username = request.form['username']
-    password = request.form['password']
-    if username == '' or password == '':
-        return render_template("message.html",
-                               message='Credentials not allowed, try again')
-    passwordfile = open("src/passwords.txt", 'r')
-    usernamefile = open('src/usernames.txt', 'r')
+    @app.route("/signup")
+    def signup():
+        print("User loaded signup page")
+        return render_template("signup.html")
 
-    password = encode(password)
 
-    username = encode(username)
+    @app.route("/post_signup", methods=["POST"])
+    def post_signup():
+        username = request.form["username"]
+        password = request.form["password"]
 
-    passlist = passwordfile.read().splitlines()
-    userlist = usernamefile.read().splitlines()
+        if username == "" or password == "":
+            return render_template(
+                "message.html", message="Credentials not allowed, try again"
+            )
 
-    if password in passlist and username in userlist:
-        print("User tried to make an account that is already taken")
-        return render_template("accounttaken.html")
-    else:
-        try:
-            import os 
-            parent_dir = "users/"
-            directory = decode(username)
-            path = os.path.join(parent_dir, directory)
-            os.mkdir(path)
+        usernamefile = open("globalData/usernames.txt", "r")
 
-            open(str(path)+'/data.txt', 'x')
-            open(str(path)+'/deleteTriggered.txt', 'x')
-            open(str(path)+'/createTriggered.txt', 'x')
+        username = encode(username)
 
-            passwordfile = open("src/passwords.txt", 'a')
-            usernamefile = open('src/usernames.txt', 'a') 
-            usernamefile.write(username)
-            usernamefile.write('\n')
-            passwordfile.write(password)
-            passwordfile.write('\n')
-            print("User created a new account")
-            return render_template("login.html")
-        except FileExistsError:
-            print("User tried to make an account that is already taken.")
+        userlist = usernamefile.read().splitlines()
+
+        if username in userlist:
+            print("User tried to make an account that is already taken")
             return render_template("accounttaken.html")
-
-@app.route("/createAssignment", methods = ["POST"])
-def createAssignment():
-        nameofuser = request.form['username_']
-        nameofuser = nameofuser.replace(" ", "")
-        name = request.form['Name']
-        description = request.form['Description']
-        duedate = request.form['DueDate']
-  
-        if checkCreateTriggered(nameofuser) == False:
-          if nameofuser:
-              file = open('users/'+nameofuser+"/data.txt")
-              lines = []
-              for line in file.read().splitlines():
-                  lines.append(line)
-              length_ = len(lines)
-              
-              id_ = length_+1
-  
-              data_ = {
-                  'name': name,
-                  'description': description,
-                  'duedate': duedate,
-                  'id': id_
-              }
-  
-              path = 'users/'+nameofuser+"/data.txt"
-  
-              import json
-              try:
-  
-                  with open(path, "r") as f:  
-                      data = f.read()  
-                  if data == "" or data == " ":
-                      data = str(data_)
-                  else:
-                      data = str(data)+"\n"+str(data_)
-              except JSONDecodeError:
-                  data = data_
-              with open(path, 'w') as f:
-                  f.write(data)
-  
-              file = open(path, 'r')
-              data = []
-              for line in file.read().splitlines():
-                  data.append(line)
-
-              triggerCreateSubmitted(nameofuser)
-              print("User created an assignment")
-              return render_template('homepage.html', data = data, username = nameofuser)
-          else:
-              return render_template('homepage.html', username = nameofuser)
         else:
-          print("User resubmitted createAssignment method, but was handled.")
-          triggerCreateNotSubmitted(nameofuser)
-          return redirect("/createResubmitted?username="+nameofuser)
-@app.route('/deleteResubmitted')
-def deleteResubmitted():
-     nameofuser = request.args.get("username")
-     path = 'users/'+nameofuser+"/data.txt"
-     file = open(path, 'r')
-     data = []
-     for line in file.read().splitlines():
-           data.append(line)
+            try:
+                import os
 
-     return render_template('homepage.html', data = data, username = nameofuser)
+                directory = decode(username)
+                parent_dir = "userData/"
 
-@app.route('/createResubmitted')
-def createResubmitted():
-     nameofuser = request.args.get("username")
-     path = 'users/'+nameofuser+"/data.txt"
-     file = open(path, 'r')
-     data = []
-     for line in file.read().splitlines():
-           data.append(line)
+                path = os.path.join(parent_dir, directory)
+                
+                os.mkdir(path)
 
-     return render_template('homepage.html', data = data, username = nameofuser)
+                open(f'{str(path)}/data.txt', "x")
+                open(f'{str(path)}/deleteTriggered.txt', "x")
+                open(f'{str(path)}/createTriggered.txt', "x")
+                open(f'{str(path)}/token.txt', "x")
 
-@app.route('/deletebtn', methods = ["GET"])
-def deletebtn():
-                nameofuser = request.args.get("username")
-                id_ = request.args.get("id_")
-                if checkDeletedTriggered(nameofuser) == False:
-                    path = 'users/'+nameofuser+"/data.txt"
-                    file = open(path, 'r')
-                    i = 1
-                    for line in file.read().splitlines():
-                        if i == int(id_):
-                            linetodelete = line
-                            break
-                        else:
-                            i = i+1
+                usedTokensFile = open("globalData/usedTokens.txt", "r")
+                usedTokens = list(usedTokensFile.read().splitlines())
+                tokenFound = False
 
-                    
+                while not tokenFound:
+                    tokenToTry = random.randint(100000000, 999999999)
 
-                    file = open(path, "r")
-                    lines = file.readlines()
-                    file.close()
+                    if str(tokenToTry) in usedTokens:
+                        tokenFound = False
 
-                    newfile = open(path, "w")
-                    for line in lines:
-                        try:
-                            if line.strip("\n") != linetodelete:
-                                newfile.write(line)
-                        except UnboundLocalError as e:
-                            print(e)
-                            pass
+                    else:
+                        tokenFound = True
+                        token = tokenToTry
 
-                    newfile.close()
+                usedTokens.append(token)
 
-                    file = open(path, 'r')
-                    data = []
-                    for line in file.read().splitlines():
-                        data.append(line)
-                    triggerDeleteSubmitted(nameofuser)
-                    print("User deleted a button")
-                    return render_template('homepage.html', data = data, username = nameofuser)
-                else: 
-                    print("User resubmitted deleteBtn method, but was handled.")
-                    triggerDeleteNotSubmitted(nameofuser)
-                    return redirect("/deleteResubmitted?username="+nameofuser)
+                usedTokensFile = open("globalData/usedTokens.txt", "a")
+
+                for usedToken in usedTokens:
+                    usedTokensFile.write(str(usedToken))
+                    usedTokensFile.write("\n")
+
+                tokenFile = open(f'{str(path)}/token.txt', "w")
+                tokenFile.write(str(token))
+
+                passwordfile = open("globalData/passwords.txt", "a")
+                usernamefile = open("globalData/usernames.txt", "a")
+
+                usernamefile.write(f"{username} \n")
+
+                passwordfile.write(f"{password} \n")
+
+                print("User created a new account")
+
+                return render_template("login.html")
+
+            except FileExistsError:
+                print("User tried to make an account that is already taken.")
+                return render_template("accounttaken.html")
+
+
+    @app.route("/createAssignment", methods=["POST"])
+    def createAssignment():
+        nameofuser = request.form["username_"].replace(" ", "")
+
+        name = request.form["Name"]
+        description = request.form["Description"]
+        duedate = request.form["DueDate"]
+
+        if assignment_action_timeout_handler(nameofuser, "create") == False:
+            if not nameofuser:
+                return render_template("homepage.html", username=nameofuser)
+
+            file = open(f"userData/{nameofuser}/data.txt")
+            lines = list(file.read().splitlines())
+            length_ = len(lines)
+
+            id_ = length_ + 1
+
+            data_ = {
+                "name": name,
+                "description": description,
+                "duedate": duedate,
+                "id": id_,
+            }
+
+            path = f"userData/{nameofuser}/data.txt"
+
+            import json
+
+            try:
+
+                with open(path, "r") as f:
+                    data = f.read()
+
+                data = str(data_) if data in ["", " "] else str(data) + "\n" + str(data_)
+
+            except JSONDecodeError:
+                data = data_
+
+            with open(path, "w") as f:
+                f.write(data)
+
+            file = open(path, "r")
+            data = list(file.read().splitlines())
+
+            assignment_action_timeout_handler(nameofuser, "create", True)
+
+
+            print("User created an assignment")
+
+            return render_template("homepage.html", data=data, username=nameofuser)
+        else:
+            print("User resubmitted createAssignment method, but was handled.")
+
+            assignment_action_timeout_handler(nameofuser, "create", False)
+
+            return redirect(f"/createResubmitted?username={nameofuser}")
+
+
+    @app.route("/deleteResubmitted")
+    def deleteResubmitted():
+        nameofuser = request.args.get("username")
+
+        path = f"userData/{nameofuser}/data.txt"
+        file = open(path, "r")
+        data = list(file.read().splitlines())
+        
+        return render_template("homepage.html", data=data, username=nameofuser)
+
+
+    @app.route("/createResubmitted")
+    def createResubmitted():
+        nameofuser = request.args.get("username")
+
+        path = f"userData/{nameofuser}/data.txt"
+        file = open(path, "r")
+        data = list(file.read().splitlines())
+
+        return render_template("homepage.html", data=data, username=nameofuser)
+
+
+    @app.route("/deletebtn", methods=["GET"])
+    def deletebtn():
+        nameofuser = request.args.get("username")
+        id_ = request.args.get("id_")
+        if assignment_action_timeout_handler(nameofuser, "delete") == False:
+            path = f"userData/{nameofuser}/data.txt"
+            file = open(path, "r")
+
+            i = 1
+            for line in file.read().splitlines():
+                if i == int(id_):
+                    linetodelete = line
+                    break
+                else:
+                    i = i + 1
+
+            with open(path, "r") as file:
+                lines = file.readlines()
+
+            with open(path, "w") as newfile:
+                for line in lines:
+                    try:
+                        if line.strip("\n") != linetodelete:
+                            newfile.write(line)
+                    except UnboundLocalError as e:
+                        print(e)
+
+            file = open(path, "r")
+            data = list(file.read().splitlines())
+
+            assignment_action_timeout_handler(nameofuser, "delete", True)
+
+            print("User deleted a button")
+
+            return render_template("homepage.html", data=data, username=nameofuser)
+        else:
+            print("User resubmitted deleteBtn method, but was handled.")
+
+            assignment_action_timeout_handler(nameofuser, "delete", False)
+
+            return redirect(f"/deleteResubmitted?username={nameofuser}")
+
+
+    app.run(host="localhost", port=port)
+
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80)
+    currentPlatform = sys.platform
+
+    keyboard.press_and_release("F11")
+
+    if currentPlatform == "win32":
+        os.system('cls')
+    else:
+        os.system('clear')
+    
+    print(banner)
+
+
+    port = input("Enter the port you'd like to run the server on (Default is 80): ")
+
+    try:
+        port = int(port)
+    except ValueError:
+        port = 80
+
+    logs = input("Do you want to see server logs? (y/N) (Default is no logs): ")
+    if logs != "y" and logs != "Y" and logs != "n" and logs != "N":
+        logs = "N"
+
+    print("\n")
+    slowprint("Server is now starting!")
+    print("\n\n")
+    server(port, logs)

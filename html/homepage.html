@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="google-signin-client_id" content="474337374940-53ouv6a9ht9lqsti7s46liql8c2sphpm.apps.googleusercontent.com">
+  <link href='https://fonts.googleapis.com/css?family=Wire+One|Raleway:300' rel='stylesheet' type='text/css'>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link rel="stylesheet" href="../css/homePage.css" type="text/css">
+	<title>Calendar</title>
+</head>
+
+<body style = 'background-color: white;'>
+  <div class="scallop-up"></div>
+  <div class="colour-block">
+    <h1 class = 'title'>Calendar</h1>
+  </div>
+  <div class = 'scallop-down'></div>
+  <div class="white-block">
+      <h1 class = 'subtitle'>Add your assignments...</h1>
+      <form action = "/createAssignment" method = "post">
+        <input value = "" type="hidden" name="username_" id = "username_">
+        <label for="name">Assignment Name</label>
+        <input type = 'text' name = 'Name' placeholder = 'Assignment Name'>
+        <label for="Description">Description</label>
+        <input type = 'text' name = 'Description' placeholder = 'Description'>
+        <label for="Due Date">Due Date</label>
+        <input type = 'text' name = 'DueDate' placeholder = 'Due Date'>
+        <input type = 'submit' value = 'Add!'>
+      </form>
+  </div>
+    <div>
+      <h1 style="display: none;" id = "data"> {{ data }} </h1>
+      <h1 style="display: none;" id = "token"> {{ token }} </h1>
+    </div>
+    <div class="scallop-up"></div>
+    <div class="colour-block">
+      <h1 class = 'subtitle' style = 'color: black;'>Your assignments</h1>
+      <table id = 'assignments'>
+        <tr>
+          <th>Assignment Name</th>
+          <th>Description</th>
+          <th>Due Date</th>
+        </tr>
+      </table>
+    </div>
+    <h1 style = "display:none;" id = "usernameStorage"> {{ username }} </h1>
+    
+    <script type="text/javascript" src = "../js/setCookies.js"></script>
+    <script type="text/javascript" src = "../js/parseData.js"></script>
+
+</body> 
+</html>
