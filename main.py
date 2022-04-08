@@ -138,6 +138,8 @@ def server(addr, port, logs):
             return render_template(
                     "homepage.html", username=username, data=data, token=token
                 )
+          else:
+            return render_template('index.html', checkedToken = "DONE")
       except Exception:
         return render_template('index.html', checkedToken = "DONE")
     @app.route("/homepage", methods=["POST"])
