@@ -9,9 +9,14 @@ import random
 import base64
 import logging
 import sys
-import keyboard
 import os
 import time
+import json
+import threading
+
+def divider(waitTime = 0):
+  time.sleep(waitTime)
+  print("\n\n" + "-"*60 + "\n\n")
 
 banner = """
                 ▄████▄   ▄▄▄        ██████ 
@@ -25,7 +30,7 @@ banner = """
                 ░ ░            ░  ░      ░  
                 ░                           
 
-        Calendar App Server -- Developed by Ben Hershey                                                                                                                                                             
+        Calendar App Server -- Developed by Ben Hershey 
 """
 
 def slowprint(s):
@@ -34,15 +39,12 @@ def slowprint(s):
     sys.stdout.flush()
     time.sleep(1./50)
 
-def server(port, logs):    
+def server(addr, port, logs):    
     log = logging.getLogger("werkzeug")
+    
+    log.disabled = not logs
 
-    if logs.lower() == "y":
-        log.disabled = True
-    else:
-        log.disabled = False
-
-    app = Flask(__name__,template_folder="html")
+    app = Flask(__name__,template_folder="html/",static_folder='css/')
 
     def encode(text):
         text_bytes = text.encode("ascii")
@@ -78,7 +80,7 @@ def server(port, logs):
 
     @app.route("/")
     def start():
-        print("User connected")
+        print("\n\n[INFO] User connected")
 
         username = request.cookies.get("username")
         token = request.cookies.get("token")
@@ -106,7 +108,7 @@ def server(port, logs):
 
     @app.route("/login")
     def load_login():
-        print("User loaded login screen")
+        print("[SERVER] User loaded login screen")
         return render_template("login.html")
 
 
@@ -140,7 +142,7 @@ def server(port, logs):
             usernameindex = usernameindex
 
         except ValueError:
-            print("User entered incorrect login info")
+            print("[SERVER] User entered incorrect login info")
             return render_template("incorrectlogin.html")
 
         try:
@@ -149,7 +151,7 @@ def server(port, logs):
             passwordindex = passwordindex
 
         except ValueError:
-            print("User entered incorrect login info")
+            print("[SERVER] User entered incorrect login info")
             return render_template("incorrectlogin.html")
 
         if username_ in usernames and password_ in passwords and usernameindex == passwordindex:
@@ -162,7 +164,7 @@ def server(port, logs):
             assignment_action_timeout_handler(username, "create", False)
 
 
-            print("User successfully logged in")
+            print("[SERVER] User successfully logged in")
 
             token = open(f"userData/{username_}/token.txt", "r").read()
 
@@ -171,13 +173,13 @@ def server(port, logs):
             )
 
         else:
-            print("User entered incorrect login info")
+            print("[SERVER] User entered incorrect login info")
             return render_template("incorrectlogin.html")
 
 
     @app.route("/signup")
     def signup():
-        print("User loaded signup page")
+        print("[SERVER] User loaded signup page")
         return render_template("signup.html")
 
 
@@ -198,7 +200,7 @@ def server(port, logs):
         userlist = usernamefile.read().splitlines()
 
         if username in userlist:
-            print("User tried to make an account that is already taken")
+            print("[SERVER] User tried to make an account that is already taken")
             return render_template("accounttaken.html")
         else:
             try:
@@ -248,12 +250,12 @@ def server(port, logs):
 
                 passwordfile.write(f"{password} \n")
 
-                print("User created a new account")
+                print("[SERVER] User created a new account")
 
                 return render_template("login.html")
 
             except FileExistsError:
-                print("User tried to make an account that is already taken.")
+                print("[SERVER] User tried to make an account that is already taken.")
                 return render_template("accounttaken.html")
 
 
@@ -305,11 +307,11 @@ def server(port, logs):
             assignment_action_timeout_handler(nameofuser, "create", True)
 
 
-            print("User created an assignment")
+            print("[SERVER] User created an assignment")
 
             return render_template("homepage.html", data=data, username=nameofuser)
         else:
-            print("User resubmitted createAssignment method, but was handled.")
+            print("[SERVER] User resubmitted createAssignment method, but was handled.")
 
             assignment_action_timeout_handler(nameofuser, "create", False)
 
@@ -370,24 +372,21 @@ def server(port, logs):
 
             assignment_action_timeout_handler(nameofuser, "delete", True)
 
-            print("User deleted a button")
+            print("[SERVER] User deleted a button")
 
             return render_template("homepage.html", data=data, username=nameofuser)
         else:
-            print("User resubmitted deleteBtn method, but was handled.")
+            print("[SERVER] User resubmitted deleteBtn method, but was handled.")
 
             assignment_action_timeout_handler(nameofuser, "delete", False)
 
             return redirect(f"/deleteResubmitted?username={nameofuser}")
 
 
-    app.run(host="localhost", port=port)
-
+    app.run(host=addr, port=port)
 
 if __name__ == "__main__":
     currentPlatform = sys.platform
-
-    keyboard.press_and_release("F11")
 
     if currentPlatform == "win32":
         os.system('cls')
@@ -396,19 +395,27 @@ if __name__ == "__main__":
     
     print(banner)
 
+    configFile = open("config.json")
+    json = json.load(configFile)
 
-    port = input("Enter the port you'd like to run the server on (Default is 80): ")
+    port = json['port']
+    addr = json['ip']
+    logs = json['logs']
 
-    try:
-        port = int(port)
-    except ValueError:
-        port = 80
+    configStats = ("""
+                  Settings in config.json  
+          
+                      Port >> """+str(port)+"""      
+                      IPv4 >> """+str(addr)+"""
+                      Logs >> """+str(logs)+"""                              
+    """)
 
-    logs = input("Do you want to see server logs? (y/N) (Default is no logs): ")
-    if logs != "y" and logs != "Y" and logs != "n" and logs != "N":
-        logs = "N"
+    print(configStats)
 
-    print("\n")
-    slowprint("Server is now starting!")
-    print("\n\n")
-    server(port, logs)
+    input("                Press enter to start server")
+    divider()
+
+    T = threading.Thread(target=divider, args = [.1])
+    T.start()
+   
+    server(addr, port, logs)
