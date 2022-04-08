@@ -48,8 +48,10 @@
     </div>
     <h1 style = "display:none;" id = "usernameStorage"> {{ username }} </h1>
     
-    <script type="text/javascript" src = "../js/setCookies.js"></script>
-    <script type="text/javascript" src = "../js/parseData.js"></script>
+    <script type="text/javascript"src = "{{ url_for('static',filename='js/setCookies.js') }}"></script>
+  
+    <script type="text/javascript"src = "{{ url_for('static',filename='js/parseData.js') }}"> </script>
+
 
 </body> 
 </html>

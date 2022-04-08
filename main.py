@@ -43,23 +43,25 @@ def slowprint(s):
     sys.stdout.flush()
     time.sleep(1./50)
 
-def server(addr, port, logs):    
-    log = logging.getLogger("werkzeug")
-    
-    log.disabled = not logs
-
-    app = Flask(__name__,template_folder="html/",static_folder='styles/')
-
-    def encode(text):
+def encode(text):
         text_bytes = text.encode("ascii")
         base64_bytes = base64.b64encode(text_bytes)
         return base64_bytes.decode("ascii")
 
 
-    def decode(text):
+def decode(text):
         text_bytes = text.encode("ascii")
         decoded_bytes = base64.b64decode(text_bytes)
         return decoded_bytes.decode("ascii")
+
+
+
+def server(addr, port, logs):    
+    log = logging.getLogger("werkzeug")
+    
+    log.disabled = not logs
+
+    app = Flask(__name__,template_folder="html/",static_folder='assets/')
 
 
     def assignment_action_timeout_handler(user, deleteOrCreate, setOption = None):
@@ -115,7 +117,27 @@ def server(addr, port, logs):
         print("[SERVER] User loaded login screen")
         return render_template("login.html")
 
+    @app.route("/loginwithtoken", methods = ['GET'])
+    def loginwithtoken():
+      token = request.args.get('token')
+      username = request.args.get('username').replace(" ", "")
+      path = f"userData/{username}/data.txt"
+      file = open(path, "r")
+      data = list(file.read().splitlines())
 
+      assignment_action_timeout_handler(username, "delete", False)
+      assignment_action_timeout_handler(username, "create", False)
+
+
+      print("[SERVER] User successfully logged in")
+
+      token_ = open(f"userData/{username}/token.txt", "r").read()
+
+      if str(token).replace(" ", "") == token_:
+        return render_template(
+                "homepage.html", username=username, data=data, token=token
+            )
+      
     @app.route("/homepage", methods=["POST"])
     def homepage():
         global username_
@@ -200,6 +222,7 @@ def server(addr, port, logs):
         usernamefile = open("globalData/usernames.txt", "r")
 
         username = encode(username)
+        password = encode(password)
 
         userlist = usernamefile.read().splitlines()
 
