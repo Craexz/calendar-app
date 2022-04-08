@@ -15,7 +15,7 @@ import json
 import threading
 
 def installRequirements():
-  os.system("pip install -q ")
+  os.system("pip install -q -r requirements.txt")
   os.system("pip install -q -–upgrade pip")
   
 def divider(waitTime = 0):
