@@ -14,6 +14,9 @@ import time
 import json
 import threading
 
+def installRequirements():
+  os.system("pip install -q -r requirements.txt")
+  
 def divider(waitTime = 0):
   time.sleep(waitTime)
   print("\n\n" + "-"*60 + "\n\n")
@@ -386,6 +389,8 @@ def server(addr, port, logs):
     app.run(host=addr, port=port)
 
 if __name__ == "__main__":
+    installRequirements()
+  
     currentPlatform = sys.platform
 
     if currentPlatform == "win32":
@@ -413,6 +418,7 @@ if __name__ == "__main__":
     print(configStats)
 
     input("                Press enter to start server")
+  
     divider()
 
     T = threading.Thread(target=divider, args = [.1])
