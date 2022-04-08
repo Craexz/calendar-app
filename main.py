@@ -47,7 +47,7 @@ def server(addr, port, logs):
     
     log.disabled = not logs
 
-    app = Flask(__name__,template_folder="html/",static_folder='css/')
+    app = Flask(__name__,template_folder="html/",static_folder='styles/')
 
     def encode(text):
         text_bytes = text.encode("ascii")
