@@ -79,7 +79,7 @@ def server(addr, port, logs):
 
 
     def checkTrigger(user, fileName):
-        file = open(f"userData/{user[1:]}/{fileName}", "r")
+        file = open(f"userData/{user}/{fileName}", "r")
         data = file.read()
         return data == "TRUE"
 
