@@ -92,7 +92,7 @@ def server(addr, port, logs):
         token = request.cookies.get("token")
 
         if username is None:
-            return render_template("index.html")
+            return render_template("index.html", checkedToken = "NO")
         try:
 
             path = f"userData/{username}/data.txt"
@@ -109,7 +109,7 @@ def server(addr, port, logs):
                 )
 
         except Exception:
-            return render_template("index.html")
+            return render_template("index.html", checkedToken = "NO")
 
 
     @app.route("/login")
@@ -119,25 +119,27 @@ def server(addr, port, logs):
 
     @app.route("/loginwithtoken", methods = ['GET'])
     def loginwithtoken():
-      token = request.args.get('token')
-      username = request.args.get('username').replace(" ", "")
-      path = f"userData/{username}/data.txt"
-      file = open(path, "r")
-      data = list(file.read().splitlines())
-
-      assignment_action_timeout_handler(username, "delete", False)
-      assignment_action_timeout_handler(username, "create", False)
-
-
-      print("[SERVER] User successfully logged in")
-
-      token_ = open(f"userData/{username}/token.txt", "r").read()
-
-      if str(token).replace(" ", "") == token_:
-        return render_template(
-                "homepage.html", username=username, data=data, token=token
-            )
-      
+      try:
+          token = request.args.get('token')
+          username = request.args.get('username').replace(" ", "")
+          path = f"userData/{username}/data.txt"
+          file = open(path, "r")
+          data = list(file.read().splitlines())
+    
+          assignment_action_timeout_handler(username, "delete", False)
+          assignment_action_timeout_handler(username, "create", False)
+    
+    
+          print("[SERVER] User successfully logged in")
+    
+          token_ = open(f"userData/{username}/token.txt", "r").read()
+    
+          if str(token).replace(" ", "") == token_:
+            return render_template(
+                    "homepage.html", username=username, data=data, token=token
+                )
+      except Exception:
+        return render_template('index.html', checkedToken = "DONE")
     @app.route("/homepage", methods=["POST"])
     def homepage():
         global username_
