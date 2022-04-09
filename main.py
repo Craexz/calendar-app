@@ -14,6 +14,7 @@ import time
 import json
 import threading
 
+
 def installRequirements():
   os.system("pip install -q -r requirements.txt")
   os.system("pip install -q -–upgrade pip")
@@ -22,20 +23,24 @@ def divider(waitTime = 0):
   time.sleep(waitTime)
   print("\n\n" + "-"*60 + "\n\n")
 
-banner = """
-                ▄████▄   ▄▄▄        ██████ 
-                ▒██▀ ▀█  ▒████▄    ▒██    ▒ 
-                ▒▓█    ▄ ▒██  ▀█▄  ░ ▓██▄   
-                ▒▓▓▄ ▄██▒░██▄▄▄▄██   ▒   ██▒
-                ▒ ▓███▀ ░ ▓█   ▓██▒▒██████▒▒
-                ░ ░▒ ▒  ░ ▒▒   ▓▒█░▒ ▒▓▒ ▒ ░
-                ░  ▒     ▒   ▒▒ ░░ ░▒  ░ ░
-                ░          ░   ▒   ░  ░  ░  
-                ░ ░            ░  ░      ░  
-                ░                           
+def assignment_action_timeout_handler(user, deleteOrCreate, setOption = None):
+        if setOption is None:
+                return checkTrigger(user, f'{deleteOrCreate}Triggered.txt')
 
-        Calendar App Server -- Developed by Ben Hershey 
-"""
+        if setOption == True:
+                file = open(f"userData/{user}/{deleteOrCreate}Triggered.txt", "w")
+                file.write("TRUE")     
+
+        elif setOption == False:
+                file = open(f"userData/{user}/{deleteOrCreate}Triggered.txt", "w")
+                file.write("FALSE")
+
+
+
+def checkTrigger(user, fileName):
+        file = open(f"userData/{user}/{fileName}", "r")
+        data = file.read()
+        return data == "TRUE"
 
 def slowprint(s):
   for c in s + '\n':
@@ -55,34 +60,65 @@ def decode(text):
         return decoded_bytes.decode("ascii")
 
 
+banner = """
+                ▄████▄   ▄▄▄        ██████ 
+                ▒██▀ ▀█  ▒████▄    ▒██    ▒ 
+                ▒▓█    ▄ ▒██  ▀█▄  ░ ▓██▄   
+                ▒▓▓▄ ▄██▒░██▄▄▄▄██   ▒   ██▒
+                ▒ ▓███▀ ░ ▓█   ▓██▒▒██████▒▒
+                ░ ░▒ ▒  ░ ▒▒   ▓▒█░▒ ▒▓▒ ▒ ░
+                ░  ▒     ▒   ▒▒ ░░ ░▒  ░ ░
+                ░          ░   ▒   ░  ░  ░  
+                ░ ░            ░  ░      ░  
+                ░                           
 
-def server(addr, port, logs):    
-    log = logging.getLogger("werkzeug")
+        Calendar App Server -- Developed by Ben Hershey 
+"""
+
+
+def init():
+    installRequirements()
     
-    log.disabled = not logs
+    currentPlatform = sys.platform
+
+    if currentPlatform == "win32":
+        os.system('cls')
+    else:
+        os.system('clear')
+        
+    print(banner)
+
+    configFile = open("config.json")
+    data = json.load(configFile)
+
+    port = data['port']
+    addr = data['ip']
+    logs = data['logs']
+
+    configStats = ("""
+                    Settings in config.json  
+            
+                        Port >> """+str(port)+"""      
+                        IPv4 >> """+str(addr)+"""
+                        Logs >> """+str(logs)+"""                              
+    """)
+
+    print(configStats)
+
+    input("                Press enter to start server")
+    
+    divider()
+
+    T = threading.Thread(target=divider, args = [.1])
+    T.start()
+    
+    return(addr, port, logs)
+
+
+if __name__ == "__main__":
+    addr, port, logs = init()
 
     app = Flask(__name__,template_folder="html/",static_folder='assets/')
-
-
-    def assignment_action_timeout_handler(user, deleteOrCreate, setOption = None):
-        if setOption is None:
-                return checkTrigger(user, f'{deleteOrCreate}Triggered.txt')
-
-        if setOption == True:
-                file = open(f"userData/{user}/{deleteOrCreate}Triggered.txt", "w")
-                file.write("TRUE")     
-
-        elif setOption == False:
-                file = open(f"userData/{user}/{deleteOrCreate}Triggered.txt", "w")
-                file.write("FALSE")
-
-
-
-    def checkTrigger(user, fileName):
-        file = open(f"userData/{user}/{fileName}", "r")
-        data = file.read()
-        return data == "TRUE"
-
 
     @app.route("/")
     def start():
@@ -412,44 +448,5 @@ def server(addr, port, logs):
             assignment_action_timeout_handler(nameofuser, "delete", False)
 
             return redirect(f"/deleteResubmitted?username={nameofuser}")
-
-
-    app.run(host=addr, port=port)
-
-if __name__ == "__main__":
-    installRequirements()
-  
-    currentPlatform = sys.platform
-
-    if currentPlatform == "win32":
-        os.system('cls')
-    else:
-        os.system('clear')
     
-    print(banner)
-
-    configFile = open("config.json")
-    json = json.load(configFile)
-
-    port = json['port']
-    addr = json['ip']
-    logs = json['logs']
-
-    configStats = ("""
-                  Settings in config.json  
-          
-                      Port >> """+str(port)+"""      
-                      IPv4 >> """+str(addr)+"""
-                      Logs >> """+str(logs)+"""                              
-    """)
-
-    print(configStats)
-
-    input("                Press enter to start server")
-  
-    divider()
-
-    T = threading.Thread(target=divider, args = [.1])
-    T.start()
-   
-    server(addr, port, logs)
+    app.run(addr, port)
