@@ -1,0 +1,24 @@
+main.py - 452
+
+accountTaken.html - 20
+homepage.html - 61
+incorrectlogin.html - 19
+index.html - 25
+login.html - 28
+message.html - 19
+signup.html - 28
+
+getCookies.js - 11
+parseData.js - 52
+setCookies.js - 6
+setupForm.js - 5
+
+accounttaken.css - 21
+homePage.css - 161
+incorrectLogin.css - 19
+index.css - 37
+login.css - 35
+message.css - 19
+signup.css - 35
+
+Total - 1053
