@@ -1,2 +1,2 @@
 # calendar-app
-https://google.com
+https://translatereader.us
